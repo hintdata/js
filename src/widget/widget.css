@@ -1,0 +1,125 @@
+/*
+ * Стили выпадашки виджета hint-data. Источник правды — этот файл; при сборке widget.js esbuild
+ * впекает его в бандл (loader:.css=text) и виджет инжектит сам — подключать отдельным <link> НЕ нужно.
+ *
+ * Кастомизация интегратором: переопределите CSS-переменные на .hd-panel в своём CSS, например
+ *   .hd-panel { --hd-accent: #e5484d; --hd-rad: 8px; }
+ * data-accent / data-radius на поле имеют приоритет (ставятся inline) — задавайте ОДИН из способов.
+ */
+/* Дефолты переменных — через :where() (специфичность 0), чтобы ЛЮБОЙ .hd-panel{} интегратора
+   их переопределял независимо от порядка подключения (наш <style> инжектится последним). */
+:where(.hd-panel) {
+  --hd-accent: #0277ff;
+  --hd-rad: 12px;
+  --hd-bg: #fff;
+  --hd-line: #e5e8ef;
+  --hd-text: #181b23;
+  --hd-mut: #8a90a1;
+}
+
+.hd-panel {
+  position: absolute;
+  z-index: 2147483000;
+  box-sizing: border-box;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--hd-bg);
+  border: 1px solid var(--hd-line);
+  border-radius: var(--hd-rad);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+  color: var(--hd-text);
+  font: 14px/1.35 -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.hd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  background: none;
+  text-align: left;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.hd-item:hover,
+.hd-item.hd-active {
+  background: color-mix(in srgb, var(--hd-accent) 10%, transparent);
+}
+
+.hd-ico {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--hd-accent) 14%, transparent);
+  color: var(--hd-accent);
+}
+
+.hd-ico svg {
+  width: 13px;
+  height: 13px;
+}
+
+.hd-txt {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.hd-main {
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.hd-sub {
+  margin-top: 2px;
+  font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--hd-mut);
+  overflow-wrap: anywhere;
+}
+
+.hd-empty {
+  padding: 16px 12px;
+  color: var(--hd-mut);
+  text-align: center;
+}
+
+.hd-hl {
+  color: var(--hd-accent);
+  font-style: normal;
+}
+
+/* подсказка-шапка над списком (опция hint, как у dadata) — прилипает к верху при скролле */
+.hd-hint {
+  position: sticky;
+  top: 0;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--hd-line);
+  background: var(--hd-bg);
+  font-size: 12px;
+  color: var(--hd-mut);
+}
+
+/* honest-unknown: шапка «адрес не найден» при низкой уверенности */
+.hd-hint.hd-low {
+  color: #b45309;
+  font-weight: 500;
+}
+
+/* inline-режим: панель в контейнере поля. По умолчанию (placement auto/top/bottom) остаётся
+   absolute — поверх контента, координаты ставит JS (хосту виджет даёт position:relative). */
+
+/* placement:flow — в потоке документа (двигает контент ниже); дефолт demo-витрин */
+.hd-panel.hd-flow {
+  position: static;
+  width: 100%;
+  margin-top: 8px;
+  max-height: none;
+}

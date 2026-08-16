@@ -1,0 +1,69 @@
+{
+  "name": "@hintdata/js",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Подсказки и стандартизация данных hint-data: data-клиент HintData + готовый виджет attachHints с кастомизацией (zero-deps).",
+  "homepage": "https://hintdata.ru",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hintdata/js.git"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "unpkg": "./dist/widget.js",
+  "jsdelivr": "./dist/widget.js",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node build.mjs && npm run build:types",
+    "build:dev": "node build.mjs --dev",
+    "build:types": "tsc -p tsconfig.types.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "keywords": [
+    "dadata",
+    "suggestions",
+    "address",
+    "autocomplete",
+    "widget",
+    "hintdata",
+    "подсказки"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.24.0",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "jsdom": "^30.0.1",
+    "prettier": "^3.9.6",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.67.0",
+    "vitest": "^4.1.10"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "bugs": {
+    "url": "https://github.com/hintdata/js/issues"
+  }
+}

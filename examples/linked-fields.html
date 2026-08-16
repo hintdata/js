@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@hintdata/js — связанные поля</title>
+    <style>
+      body {
+        font: 16px/1.5 system-ui, sans-serif;
+        max-width: 42rem;
+        margin: 3rem auto;
+        padding: 0 1rem;
+      }
+      label {
+        display: block;
+        margin: 1.25rem 0 0.35rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+      input {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        font: inherit;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+      }
+      input:disabled {
+        background: #f3f4f6;
+        color: #9ca3af;
+      }
+      pre {
+        background: #f6f7f9;
+        padding: 0.75rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 0.8125rem;
+      }
+      code {
+        background: #f6f7f9;
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Связанные поля</h1>
+    <p>
+      Атрибут <code>data-parent</code> связывает поля: пока в родителе ничего не выбрано, дочернее выключено,
+      а после выбора виджет сам якорит поиск по <code>fias_id</code> и переходит на уровень детей. Правка
+      родителя сбрасывает цепочку. JavaScript для этого не нужен.
+    </p>
+
+    <label for="city">Город</label>
+    <input id="city" data-hintdata="address" data-from="city" data-to="city" placeholder="Начните вводить" />
+
+    <label for="street">Улица — ищется только в выбранном городе</label>
+    <input id="street" data-hintdata="address" data-parent="#city" data-to="street" />
+
+    <label for="house">Дом — только на выбранной улице</label>
+    <input id="house" data-hintdata="address" data-parent="#street" data-to="house" />
+
+    <h2>Заполнение соседних полей</h2>
+    <p>
+      Одно поле раскладывает выбранный объект по остальным через <code>data-fill-*</code> — в корзине так
+      заполняют индекс и город, не показывая их отдельными подсказками.
+    </p>
+
+    <label for="full">Адрес одной строкой</label>
+    <input
+      id="full"
+      data-hintdata="address"
+      data-fill-postal="#zip"
+      data-fill-city="#fill-city"
+      data-fill-street="#fill-street"
+      placeholder="Город, улица, дом"
+    />
+
+    <label for="zip">Индекс</label>
+    <input id="zip" readonly />
+
+    <label for="fill-city">Город</label>
+    <input id="fill-city" readonly />
+
+    <label for="fill-street">Улица</label>
+    <input id="fill-street" readonly />
+
+    <h2>Выбранный объект</h2>
+    <pre id="out">—</pre>
+
+    <!-- Замените ключ на свой публичный pk_ из личного кабинета -->
+    <script src="https://api.hintdata.ru/widget.js" data-key="pk_xxx"></script>
+    <script>
+      document.addEventListener('hintdata:select', (e) => {
+        document.getElementById('out').textContent = JSON.stringify(e.detail.suggestion, null, 2);
+      });
+    </script>
+  </body>
+</html>

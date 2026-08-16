@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@hintdata/js — подключение тегом script</title>
+    <style>
+      body {
+        font: 16px/1.5 system-ui, sans-serif;
+        max-width: 40rem;
+        margin: 3rem auto;
+        padding: 0 1rem;
+      }
+      label {
+        display: block;
+        margin: 1.5rem 0 0.35rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+      input {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        font: inherit;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+      }
+      pre {
+        background: #f6f7f9;
+        padding: 0.75rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 0.8125rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Подключение без сборки</h1>
+    <p>Скрипт сам находит поля с <code>data-hintdata</code>, в том числе добавленные позже.</p>
+
+    <label for="addr">Адрес — с подписью из индекса и города</label>
+    <input id="addr" data-hintdata="address" data-fields="postal,city" placeholder="Начните вводить адрес" />
+
+    <label for="bank">Банк</label>
+    <input id="bank" data-hintdata="bank" data-fields="bic" placeholder="Название, БИК или SWIFT" />
+
+    <label for="car">Модель автомобиля</label>
+    <input id="car" data-hintdata="car_model" placeholder="Например, camry" />
+
+    <label for="city">Только города — срез по уровню</label>
+    <input id="city" data-hintdata="address" data-from="city" data-to="city" placeholder="Город" />
+
+    <h2>Выбранная подсказка</h2>
+    <pre id="out">—</pre>
+
+    <!-- Замените ключ на свой публичный pk_ из личного кабинета -->
+    <script src="https://api.hintdata.ru/widget.js" data-key="pk_xxx"></script>
+    <script>
+      document.addEventListener('hintdata:select', (e) => {
+        document.getElementById('out').textContent = JSON.stringify(e.detail.suggestion, null, 2);
+      });
+    </script>
+  </body>
+</html>
