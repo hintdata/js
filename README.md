@@ -96,7 +96,7 @@ Drill-down, гео-приоритет и опции `from`/`to`/`locations` ра
 
 ## Виджет: опции
 
-`attachHints(input, options)`. Все опции необязательны.
+`attachHints(field, options)` — поле это `<input>` или `<textarea>`. Все опции необязательны.
 
 ### Подключение
 
