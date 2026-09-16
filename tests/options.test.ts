@@ -78,6 +78,17 @@ describe('parseDataAttrs — атрибуты поля', () => {
     expect(parseDataAttrs(el({ 'data-icon': '🏠' })).icon).toBe('🏠');
   });
 
+  it('data-selected — алиас для подстановки после выбора', () => {
+    expect(parseDataAttrs(el({ 'data-selected': 'street' })).selected).toBe('street');
+  });
+
+  it('data-label — алиас главной строки пункта; без него label = selected', () => {
+    expect(parseDataAttrs(el({ 'data-label': 'house' })).label).toBe('house');
+    expect(resolveOptions({ selected: 'street' }).label).toBe('street');
+    expect(resolveOptions({ selected: 'street', label: 'value' }).label).toBe('value');
+    expect(resolveOptions({}).label).toBeNull();
+  });
+
   it('составные имена атрибутов', () => {
     const o = parseDataAttrs(el({ 'data-empty-text': 'Ничего', 'data-honest-threshold': '0.7' }));
     expect(o).toMatchObject({ emptyText: 'Ничего', honestThreshold: 0.7 });

@@ -6,7 +6,9 @@
     <title>@hintdata/js — связанные поля</title>
     <style>
       body {
-        font: 16px/1.5 system-ui, sans-serif;
+        font:
+          16px/1.5 system-ui,
+          sans-serif;
         max-width: 42rem;
         margin: 3rem auto;
         padding: 0 1rem;
@@ -49,15 +51,26 @@
       а после выбора виджет сам якорит поиск по <code>fias_id</code> и переходит на уровень детей. Правка
       родителя сбрасывает цепочку. JavaScript для этого не нужен.
     </p>
+    <p>
+      Каждое поле цепочки получает от API полный адрес — без <code>data-selected</code> во все три поля лёг бы
+      один и тот же текст. Атрибут обрезает подстановку до своего уровня (город/улицу/дом).
+    </p>
 
     <label for="city">Город</label>
-    <input id="city" data-hintdata="address" data-from="city" data-to="city" placeholder="Начните вводить" />
+    <input
+      id="city"
+      data-hintdata="address"
+      data-from="city"
+      data-to="city"
+      data-selected="city"
+      placeholder="Начните вводить"
+    />
 
     <label for="street">Улица — ищется только в выбранном городе</label>
-    <input id="street" data-hintdata="address" data-parent="#city" data-to="street" />
+    <input id="street" data-hintdata="address" data-parent="#city" data-to="street" data-selected="street" />
 
     <label for="house">Дом — только на выбранной улице</label>
-    <input id="house" data-hintdata="address" data-parent="#street" data-to="house" />
+    <input id="house" data-hintdata="address" data-parent="#street" data-to="house" data-selected="house" />
 
     <h2>Заполнение соседних полей</h2>
     <p>

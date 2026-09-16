@@ -4,7 +4,7 @@
  * Для тех, кто без сборки: <script src="…/widget.js" data-key="pk_…"></script> + <input data-hintdata="address">.
  */
 import { HintData } from './core/client';
-import { attachHints, type HintsInstance } from './widget/create';
+import { attachHints as rawAttachHints, type HintsInstance } from './widget/create';
 import { parseDataAttrs, type WidgetOptions } from './widget/options';
 
 type Field = HTMLInputElement | HTMLTextAreaElement;
@@ -12,7 +12,8 @@ const SELECTOR = '[data-hintdata]';
 
 const DEFAULT_BASE = 'https://api.hintdata.ru';
 
-/** Ключ/url из подключившего <script> (data-* или ?key=/?url= в src) либо window.HINTDATA_KEY. */
+/** Ключ/url подключившего <script> (data-* или ?key=/?url= в src). Снимается один раз при загрузке —
+ *  document.currentScript доступен только в синхронном top-level коде. */
 function scriptConfig(): { key: string; url: string } {
   const cur = (document.currentScript as HTMLScriptElement | null) ?? null;
   let key = cur?.getAttribute('data-key') ?? '';
@@ -26,8 +27,7 @@ function scriptConfig(): { key: string; url: string } {
       /* ignore */
     }
   }
-  const g = (window as unknown as { HINTDATA_KEY?: string }).HINTDATA_KEY;
-  return { key: key || g || '', url: url || DEFAULT_BASE };
+  return { key, url: url || DEFAULT_BASE };
 }
 
 interface HdDemoEl {
@@ -38,16 +38,29 @@ const SCRIPT = scriptConfig();
 // инстансы по полю — чтобы снять виджет (и убрать его панель), когда поле уходит из DOM
 const INSTANCES = new WeakMap<Element, HintsInstance>();
 
+/** Дефолты ключа/url — общие для автоскана и window.hintData.attachHints. window.HINTDATA_KEY
+ *  читаем лениво (в момент attach, а не при загрузке скрипта), чтобы ключ, выставленный после
+ *  подключения widget.js, тоже подхватывался. */
+function withScriptDefaults(opts: WidgetOptions): WidgetOptions {
+  const g = (window as unknown as { HINTDATA_KEY?: string }).HINTDATA_KEY;
+  opts.key = opts.key || SCRIPT.key || g || '';
+  opts.url = opts.url || SCRIPT.url;
+  return opts;
+}
+
+/** window.hintData.attachHints — та же ручная точка входа, что и импортируемый attachHints, но
+ *  с дефолтами ключа/url со скрипта (как у автоскана), иначе без key уходят запросы без Authorization. */
+function attachHints(input: Field, options: WidgetOptions = {}): HintsInstance {
+  return rawAttachHints(input, withScriptDefaults({ ...options }));
+}
+
 function attach(el: Field): void {
   if (INSTANCES.has(el)) return;
-  const opts = parseDataAttrs(el);
-  // data-key/data-url на поле переопределяют подключение скрипта
-  opts.key = opts.key || SCRIPT.key;
-  opts.url = opts.url || SCRIPT.url;
+  const opts = withScriptDefaults(parseDataAttrs(el));
   // демо-данные превью кладут недокументированным свойством __hdDemo (бандл остаётся чистым)
   const demo = (el as unknown as HdDemoEl).__hdDemo;
   if (Array.isArray(demo)) opts.demoItems = demo;
-  INSTANCES.set(el, attachHints(el, opts));
+  INSTANCES.set(el, rawAttachHints(el, opts));
 }
 
 function attachAll(root: ParentNode = document): void {

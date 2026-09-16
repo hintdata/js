@@ -58,6 +58,18 @@ export interface WidgetOptions extends WidgetCallbacks {
   icon?: boolean | string;
   /** Поля саб-строки (строка/массив; умолч. "value" — только значение, без саб-строки, как у dadata). */
   fields?: string[] | string;
+  /**
+   * Что подставить в поле после выбора — алиас поля, как у `fields`/`fill`; по умолчанию `value`,
+   * полный текст подсказки. Для связанных полей `data-selected="street"` оставляет в поле только
+   * улицу, а не полный адрес, который туда кладёт родитель.
+   */
+  selected?: string;
+  /**
+   * Главная строка пункта списка — алиас поля, как у `selected`. По умолчанию равна `selected`: если в
+   * поле уходит только улица, список тоже показывает улицы («Пискунова»), а не полный адрес. `label: 'value'`
+   * возвращает полный текст в список при сохранении `selected`. Пустой алиас у подсказки — полный `value`.
+   */
+  label?: string;
   /** Текст-подсказка под списком (умолч. "" — скрыто, чистый дропдаун; задать строку чтобы показать). */
   hint?: string;
   emptyText?: string;
@@ -104,6 +116,8 @@ export interface ResolvedOptions extends WidgetCallbacks {
   radius: string | null;
   icon: boolean | string;
   fields: string[];
+  selected: string | null;
+  label: string | null;
   hint: string;
   emptyText: string;
   honest: boolean;
@@ -156,6 +170,8 @@ export function resolveOptions(o: WidgetOptions): ResolvedOptions {
     radius: o.radius != null ? `${clampInt(o.radius, 0, 64, 12)}px` : null,
     icon: o.icon ?? false,
     fields,
+    selected: o.selected || null,
+    label: o.label || o.selected || null,
     hint: o.hint ?? '',
     emptyText: o.emptyText || '',
     honest: o.honest ?? false,
@@ -198,6 +214,8 @@ export function parseDataAttrs(el: HTMLElement): WidgetOptions {
     // data-icon: "false"/нет → выкл; "true" → стрелка-метка; иное → свой HTML/SVG/emoji
     icon: d.icon == null ? undefined : d.icon === 'false' ? false : d.icon === 'true' ? true : d.icon,
     fields: d.fields,
+    selected: d.selected,
+    label: d.label,
     hint: d.hint,
     emptyText: d.emptyText,
     honest: d.honest == null ? undefined : d.honest !== 'false',

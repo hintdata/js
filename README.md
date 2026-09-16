@@ -60,9 +60,10 @@ hints.destroy(); // снять виджет
 | `pk_` | браузер (виджет, публичный фронтенд) | `suggest` по любому сервису, `geolocate`, `iplocate` |
 | `sk_` | только сервер                        | всё, включая `find` и стандартизацию                 |
 
-`pk_` не является секретом — он виден в исходниках страницы. Ограничить его можно списком разрешённых
-IP в личном кабинете; заголовок `Referer` не проверяется. Кадастр доступен и по `pk_`, но тарифицируется
-за запрос — если ставите его в открытый браузерный виджет, ограничение по IP обязательно.
+`pk_` не является секретом — он виден в исходниках страницы. Ограничить его можно в личном кабинете
+списком сайтов (проверяется заголовок `Origin`, а если его нет — `Referer`) и/или списком IP; пустой
+список — без ограничения. Кадастр доступен и по `pk_`, но тарифицируется за запрос — если ставите его
+в открытый браузерный виджет, одно из ограничений обязательно.
 
 ---
 
@@ -124,16 +125,17 @@ Drill-down, гео-приоритет и опции `from`/`to`/`locations` ра
 
 ### Вид
 
-| Опция       | Тип                                     | Дефолт      | Лимит | Описание                                                          |
-| ----------- | --------------------------------------- | ----------- | ----- | ----------------------------------------------------------------- |
-| `placement` | `'auto' \| 'bottom' \| 'top' \| 'flow'` | `'auto'`    | —     | где раскрывается список                                           |
-| `inline`    | `boolean`                               | `false`     | —     | список внутри контейнера поля, а не на `body`                     |
-| `accent`    | `string`                                | цвет из CSS | —     | цвет выделения, любой CSS-цвет                                    |
-| `radius`    | `number`                                | из CSS      | 0–64  | скругление, px; не задан — берётся `--hd-rad`                     |
-| `icon`      | `boolean \| string`                     | `false`     | —     | `true` — иконка сервиса, строка — свой HTML/SVG/эмодзи            |
-| `fields`    | `string[] \| string`                    | `'value'`   | —     | поля подписи под значением                                        |
-| `hint`      | `string`                                | `''`        | —     | текст-шапка над списком                                           |
-| `emptyText` | `string`                                | `''`        | —     | текст при пустом результате; пусто — список просто не открывается |
+| Опция       | Тип                                     | Дефолт      | Лимит | Описание                                                                                    |
+| ----------- | --------------------------------------- | ----------- | ----- | ------------------------------------------------------------------------------------------- |
+| `placement` | `'auto' \| 'bottom' \| 'top' \| 'flow'` | `'auto'`    | —     | где раскрывается список                                                                     |
+| `inline`    | `boolean`                               | `false`     | —     | список внутри контейнера поля, а не на `body`                                               |
+| `accent`    | `string`                                | цвет из CSS | —     | цвет выделения, любой CSS-цвет                                                              |
+| `radius`    | `number`                                | из CSS      | 0–64  | скругление, px; не задан — берётся `--hd-rad`                                               |
+| `icon`      | `boolean \| string`                     | `false`     | —     | `true` — иконка сервиса, строка — свой HTML/SVG/эмодзи                                      |
+| `fields`    | `string[] \| string`                    | `'value'`   | —     | поля подписи под значением                                                                  |
+| `selected`  | `string`                                | `'value'`   | —     | алиас поля для подстановки после выбора (как у `fields`); сильнее — колбэк `formatSelected` |
+| `hint`      | `string`                                | `''`        | —     | текст-шапка над списком                                                                     |
+| `emptyText` | `string`                                | `''`        | —     | текст при пустом результате; пусто — список просто не открывается                           |
 
 `placement`: `auto` раскрывает вниз поверх контента, а у нижнего края экрана — вверх, подгоняя высоту под
 свободное место. `bottom`/`top` фиксируют сторону. `flow` встраивает список в поток документа, сдвигая
@@ -142,6 +144,9 @@ Drill-down, гео-приоритет и опции `from`/`to`/`locations` ра
 `fields` для адреса принимает: `postal`, `region`, `area`, `city`, `settlement`, `street`, `house`,
 `kladr`, `fias`, `cadastral`, `geo`. Для остальных сервисов — любое поле ответа. Например
 `fields: ['postal', 'region']` даст подпись «101000 · Москва».
+
+`selected` берёт те же алиасы: без него в поле после выбора попадает `suggestion.value` целиком, а
+`selected: 'street'` оставит только улицу — актуально для связанных полей, куда иначе ляжет полный адрес.
 
 ### Честный результат
 
@@ -165,7 +170,7 @@ attachHints(input, {
   onError: (e) => console.warn(e.code), // запрос не удался: unauthorized, rate_limited, …
   onSelectNothing: (value) => {}, // ушли из поля, не выбрав из подсказок
   formatResult: (suggestion, query) => `<b>${suggestion.value}</b>`, // своя разметка пункта
-  formatSelected: (suggestion) => suggestion.address.street, // что подставить в поле
+  formatSelected: (suggestion) => suggestion.address.street, // что подставить в поле (иначе — опция selected, по умолчанию suggestion.value)
 });
 ```
 
@@ -182,6 +187,9 @@ attachHints(input, {
 ```ts
 input.addEventListener('hintdata:select', (e) => console.log(e.detail.suggestion));
 ```
+
+Сбой запроса дополнительно рассылается событием `hintdata:error` с `detail: { code, status, error }` —
+это замена `onError` для атрибутного режима, где колбэков нет.
 
 Клавиатура: `↑`/`↓` — перебор, `Enter` — выбрать активную, `Esc` — закрыть.
 
@@ -213,9 +221,15 @@ const house = attachHints(houseInput, { client, parent: streetInput, to: 'house'
 То же самое без сборщика — атрибутом, без единой строки JS:
 
 ```html
-<input data-hintdata="address" id="city" data-from="city" data-to="city" />
-<input data-hintdata="address" data-parent="#city" data-to="street" />
+<input data-hintdata="address" id="city" data-from="city" data-to="city" data-selected="city" />
+<input data-hintdata="address" data-parent="#city" data-to="street" data-selected="street" />
+<input data-hintdata="address" data-parent="#street" data-to="house" data-selected="house" />
 ```
+
+Без `data-selected` в поле после выбора попадает полный адрес целиком (`suggestion.value`) — на каждом
+уровне цепочки один и тот же текст, а не то, что выбрали именно в этом поле. С `data-selected` и список
+показывает только свой уровень («Пискунова», «131/3»); полный адрес в списке при этом можно вернуть
+через `data-label="value"`, а другой уровень — `data-label="<алиас>"`.
 
 Свой `from` сильнее выведенного из родителя — если знаете уровень, задавайте явно.
 
@@ -289,7 +303,9 @@ attachHints(toInput, { client });
 ```
 
 Скрипт сам находит поля с `data-hintdata`, в том числе добавленные позже — в SPA переинициализация
-не нужна. Ключ можно задать и глобально: `window.HINTDATA_KEY = 'pk_xxx'`.
+не нужна. Ключ можно задать и глобально: `window.HINTDATA_KEY = 'pk_xxx'` — даже после загрузки
+widget.js, до первого использования поля. Его же наследуют `window.hintData.attachHints` и `scan`
+вместе с `url` — как и автоскан, если не передать свои `key`/`url` в опциях.
 
 Каждая опция имеет парный атрибут:
 
@@ -307,6 +323,8 @@ attachHints(toInput, { client });
 | `data-honest`, `data-honest-text`, `data-honest-threshold` | `honest`, `honestText`, `honestThreshold`             |
 | `data-parent`                                              | `parent` — CSS-селектор поля-родителя                 |
 | `data-fill-postal`, `data-fill-city`, …                    | `fill` — алиас поля → CSS-селектор                    |
+| `data-selected`                                            | `selected` — алиас поля для подстановки после выбора  |
+| `data-label`                                               | `label` — алиас поля для главной строки пункта списка (умолч. = `selected`) |
 
 Колбэки через атрибуты не задаются — используйте событие `hintdata:select` либо ручную инициализацию:
 

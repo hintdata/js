@@ -58,6 +58,18 @@ describe('onError — сбой перестаёт выглядеть как «н
     expect(visible()).toBe(false);
   });
 
+  it('HTTP 401 рассылает hintdata:error на поле (атрибутный режим без колбэков)', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) } as Response);
+    const onEvent = vi.fn();
+    input.addEventListener('hintdata:error', onEvent);
+    hints = attachHints(input, { key: 'pk', geo: false });
+    await type('мясницкая');
+
+    expect(onEvent).toHaveBeenCalledOnce();
+    expect(onEvent.mock.calls[0][0].detail).toMatchObject({ code: 'unauthorized', status: 401 });
+    expect(visible()).toBe(false);
+  });
+
   it('пустая, но успешная выдача ошибкой не считается', async () => {
     fetchMock.mockResolvedValue(reply([]));
     const onError = vi.fn();
@@ -214,6 +226,64 @@ describe('formatSelected', () => {
 
     expect(input.value).toBe('Мясницкая');
     expect(onSelect.mock.calls[0][0].value).toBe(ITEMS[0].value);
+  });
+});
+
+describe('selected — алиас вместо полного текста подсказки', () => {
+  it('подставляет только свой уровень адреса, а событие всё равно несёт полный текст', async () => {
+    const detail = vi.fn();
+    input.addEventListener('hintdata:select', (e) => detail((e as CustomEvent).detail));
+    hints = attachHints(input, { key: 'pk', geo: false, to: 'house', selected: 'street' });
+    await type('мясницкая');
+    pick(items()[0]);
+
+    expect(input.value).toBe('Мясницкая');
+    expect(detail.mock.calls[0][0].value).toBe(ITEMS[0].value);
+  });
+
+  it('пустой алиас у подсказки — откат на полный value, чтобы поле не осталось пустым', async () => {
+    fetchMock.mockResolvedValue(
+      reply([{ value: 'г Москва, ул Мясницкая', address: { city: 'Москва', street: 'Мясницкая' } }]),
+    );
+    hints = attachHints(input, { key: 'pk', geo: false, to: 'house', selected: 'house' });
+    await type('мясницкая');
+    pick(items()[0]);
+
+    expect(input.value).toBe('г Москва, ул Мясницкая');
+  });
+
+  it('список при selected показывает только свой уровень, а не полный адрес', async () => {
+    hints = attachHints(input, { key: 'pk', geo: false, to: 'house', selected: 'street' });
+    await type('мясницкая');
+
+    expect(items()[0]!.querySelector('.hd-main')!.textContent).toBe('Мясницкая');
+  });
+
+  it('label отдельно от selected: в списке дом, в поле улица; label=value возвращает полный текст', async () => {
+    hints = attachHints(input, { key: 'pk', geo: false, to: 'house', selected: 'street', label: 'house' });
+    await type('мясницкая');
+    expect(items()[0]!.querySelector('.hd-main')!.textContent).toBe('13');
+    pick(items()[0]);
+    expect(input.value).toBe('Мясницкая');
+
+    hints.destroy();
+    hints = attachHints(input, { key: 'pk', geo: false, to: 'house', selected: 'street', label: 'value' });
+    await type('мясницкая');
+    expect(items()[0]!.querySelector('.hd-main')!.textContent).toBe(ITEMS[0].value);
+  });
+
+  it('formatSelected сильнее selected', async () => {
+    hints = attachHints(input, {
+      key: 'pk',
+      geo: false,
+      to: 'house',
+      selected: 'street',
+      formatSelected: (s) => `!${s.address?.house ?? ''}`,
+    });
+    await type('мясницкая');
+    pick(items()[0]);
+
+    expect(input.value).toBe('!13');
   });
 });
 

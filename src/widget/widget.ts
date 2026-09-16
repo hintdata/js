@@ -352,7 +352,16 @@ export class Widget {
     } catch (e) {
       if (ctrl.signal.aborted || this.aborter !== ctrl) return null; // отменён более новым — игнор
       this.close(); // запрос упал (API/сеть) — ничего не показываем
-      if (e instanceof HintDataError) this.o.onError?.(e);
+      if (e instanceof HintDataError) {
+        // DOM-событие — та же ошибка для атрибутного режима (без JS колбэков onError недостижим)
+        this.el.dispatchEvent(
+          new CustomEvent('hintdata:error', {
+            bubbles: true,
+            detail: { code: e.code, status: e.status, error: e },
+          }),
+        );
+        this.o.onError?.(e);
+      }
       return null;
     }
   }
@@ -441,7 +450,13 @@ export class Widget {
     // Форма данных — от СЫРОГО сервиса, не от клампа domain(): у неадресных сервисов поля плоские
     // (s[field]), и ADDRESS_FIELD-маппинг дал бы пустой саб. Кламп меняет только КУДА уходит запрос.
     const sub = formatSub(s, this.o.fields, this.o.service === 'address');
-    return `<span class="hd-txt"><span class="hd-main">${this.hl(s.value, q)}</span>${sub ? `<span class="hd-sub">${esc(sub)}</span>` : ''}</span>`;
+    return `<span class="hd-txt"><span class="hd-main">${this.hl(this.labelOf(s), q)}</span>${sub ? `<span class="hd-sub">${esc(sub)}</span>` : ''}</span>`;
+  }
+
+  /** Главная строка пункта (опция label, по умолчанию = selected): алиас поля, пустой алиас — полный value. */
+  private labelOf(s: Suggestion): string {
+    if (!this.o.label || this.o.label === 'value') return s.value;
+    return formatSub(s, [this.o.label], this.o.service === 'address') || s.value;
   }
 
   // показать панель: flow — статично в потоке, остальные — спозиционировать у поля (с флипом)
@@ -537,7 +552,7 @@ export class Widget {
   private select(i: number): void {
     const s = this.items[i];
     if (!s) return;
-    this.el.value = this.o.formatSelected ? this.o.formatSelected(s) : s.value;
+    this.el.value = this.o.formatSelected ? this.o.formatSelected(s) : this.selectedValue(s);
     this.picked = this.el.value;
     this.emitting = true;
     try {
@@ -555,6 +570,12 @@ export class Widget {
     this.o.onSelect?.(s);
     // После выбора сразу подсказываем продолжение вглубь (город → улица → дом → квартира).
     void this.drillDown(s);
+  }
+
+  /** Значение для поля при выборе (опция selected): алиас без formatSelected; пустой алиас — полный value. */
+  private selectedValue(s: Suggestion): string {
+    if (!this.o.selected) return s.value;
+    return formatSub(s, [this.o.selected], this.o.service === 'address') || s.value;
   }
 
   private async drillDown(s: Suggestion): Promise<void> {
