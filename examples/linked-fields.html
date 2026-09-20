@@ -97,6 +97,36 @@
     <label for="fill-street">Улица</label>
     <input id="fill-street" readonly />
 
+    <h2>Вложенные поля: реквизиты организации</h2>
+    <p>
+      Алиас может указывать ВНУТРЬ объекта: <code>data-fill-management-name</code> читает
+      <code>management.name</code>. Сам объект в поле подставлять нельзя — он дал бы «[object Object]»,
+      поэтому указываем лист.
+    </p>
+
+    <label for="party">Организация</label>
+    <input
+      id="party"
+      data-hintdata="party"
+      data-fill-inn="#p-inn"
+      data-fill-kpp="#p-kpp"
+      data-fill-management-name="#p-boss"
+      data-fill-address="#p-addr"
+      placeholder="Название, ИНН или ОГРН"
+    />
+
+    <label for="p-inn">ИНН</label>
+    <input id="p-inn" readonly />
+
+    <label for="p-kpp">КПП</label>
+    <input id="p-kpp" readonly />
+
+    <label for="p-boss">Руководитель</label>
+    <input id="p-boss" readonly />
+
+    <label for="p-addr">Адрес</label>
+    <input id="p-addr" readonly />
+
     <h2>Выбранный объект</h2>
     <pre id="out">—</pre>
 

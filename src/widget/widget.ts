@@ -6,6 +6,7 @@
  */
 import { HintData, HintDataError } from '../core/client';
 import { drillStep, formatSub } from '../core/address';
+import { GEO_SERVICES } from '../core/client';
 import type { LocationConstraint, Service, Suggestion, SuggestOptions } from '../core/types';
 import { resolveOptions, type ResolvedOptions, type WidgetOptions } from './options';
 import { ICON, ICONS, injectStyles } from './styles';
@@ -297,9 +298,12 @@ export class Widget {
   /** Опции suggest из текущего конфига. extra переопределяет дефолты; noBoost — для drill-down. */
   private opts(extra: Partial<SuggestOptions> = {}, noBoost = false): SuggestOptions {
     const o: SuggestOptions = { count: this.o.count };
+    // Уровни адресной иерархии — только у адреса; территория — у всех GEO_SERVICES.
     if (this.domain() === 'address') {
       if (this.o.from) o.fromBound = this.o.from as SuggestOptions['fromBound'];
       if (this.o.to) o.toBound = this.o.to as SuggestOptions['toBound'];
+    }
+    if (GEO_SERVICES.has(this.domain())) {
       if (this.o.locations) o.locations = this.o.locations;
       if (this.boost && !noBoost) o.locationsBoost = [this.boost];
     }
@@ -320,7 +324,9 @@ export class Widget {
   }
 
   private async locate(): Promise<void> {
-    if (!this.o.geo || this.located || this.domain() !== 'address') return;
+    // Гео-приоритет нужен там, где у выдачи есть территория: адрес и организации. Список общий с
+    // клиентом (GEO_SERVICES) — раздельные проверки уже однажды разошлись и выключили гео у party.
+    if (!this.o.geo || this.located || !GEO_SERVICES.has(this.domain())) return;
     this.located = true;
     this.boost = await this.hd.geoBoost();
   }

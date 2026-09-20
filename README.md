@@ -141,9 +141,36 @@ Drill-down, гео-приоритет и опции `from`/`to`/`locations` ра
 свободное место. `bottom`/`top` фиксируют сторону. `flow` встраивает список в поток документа, сдвигая
 контент ниже — для постоянно раскрытых блоков.
 
-`fields` для адреса принимает: `postal`, `region`, `area`, `city`, `settlement`, `street`, `house`,
-`kladr`, `fias`, `cadastral`, `geo`. Для остальных сервисов — любое поле ответа. Например
-`fields: ['postal', 'region']` даст подпись «101000 · Москва».
+`fields` для адреса принимает короткие имена: `postal`, `region`, `area`, `city`, `settlement`,
+`street`, `house`, `kladr`, `fias`, `cadastral`, `geo`. Например `fields: ['postal', 'region']` даст
+подпись «101000 · Москва».
+
+#### Вложенные поля
+
+Алиас может указывать на поле ВНУТРИ объекта — через точку. Работает у всех сервисов и во всех
+четырёх местах, где берётся алиас: `fields`, `label`, `selected`, `fill`.
+
+```ts
+fields: ['inn', 'management.name']; // организация: ИНН и руководитель
+fields: ['address.street', 'codes.kladr']; // адрес: мимо коротких имён, напрямую
+fields: ['emails.0.value']; // сквозь массив по индексу
+```
+
+Разбор идёт по порядку, и первое совпадение выигрывает:
+
+1. **точное поле верхнего уровня** — `name_short` остаётся собой и не читается как `name.short`;
+2. у адреса — **короткое имя из списка выше**;
+3. **путь через точку**;
+4. **подчёркивания как путь**, если прямого совпадения не нашлось.
+
+Четвёртый пункт нужен только для `data-fill-*`: там алиас берётся из ИМЕНИ атрибута, а точку в имя
+атрибута не записать. Поэтому `data-fill-management-name` доезжает до `management.name`.
+
+Любой отсутствующий или `null` шаг даёт пустую строку. Объект или массив целиком — тоже пустую: в
+поле формы он превратился бы в «[object Object]», поэтому указывать нужно лист.
+
+⚠️Номер элемента массива и год в имени атрибута не выразить — HTML превращает имя в ключ `dataset`, и
+цифра ломает разбор. `emails.0.value` доступен в `fields`/`label`/`selected`, но не в `data-fill-*`.
 
 `selected` берёт те же алиасы: без него в поле после выбора попадает `suggestion.value` целиком, а
 `selected: 'street'` оставит только улицу — актуально для связанных полей, куда иначе ляжет полный адрес.
@@ -246,8 +273,16 @@ attachHints(input, { key: 'pk_xxx', fill: { postal: '#zip', city: '#city' } });
 <input data-hintdata="address" data-fill-postal="#zip" data-fill-city="#city" />
 ```
 
-Ключи — те же алиасы, что у `fields`. В заполненные поля отправляются `input` и `change`, поэтому
-биндинги фреймворков их подхватывают.
+Ключи — те же алиасы, что у `fields`, включая вложенные:
+
+```html
+<input data-hintdata="party" data-fill-inn="#inn" data-fill-management-name="#boss" />
+```
+
+Значение атрибута — CSS-селектор целевого поля (`#inn`, `.director`, `[name=boss]`): куда положить.
+Имя атрибута — что взять. Поле, которого нет на странице, молча пропускается.
+
+В заполненные поля отправляются `input` и `change`, поэтому биндинги фреймворков их подхватывают.
 
 Готовая форма «город → улица → дом» плюс раскладка по полям — в
 [`examples/linked-fields.html`](examples/linked-fields.html).
@@ -309,21 +344,21 @@ widget.js, до первого использования поля. Его же 
 
 Каждая опция имеет парный атрибут:
 
-| Атрибут                                                    | Опция                                                 |
-| ---------------------------------------------------------- | ----------------------------------------------------- |
-| `data-hintdata`                                            | `service`                                             |
-| `data-key`, `data-url`                                     | `key`, `url`                                          |
-| `data-count`, `data-min`, `data-delay`                     | `count`, `minChars`, `delay`                          |
-| `data-geo="false"`                                         | `geo`                                                 |
-| `data-locations`, `data-from`, `data-to`                   | `locations`, `from`, `to`                             |
-| `data-placement`, `data-inline="true"`                     | `placement`, `inline`                                 |
-| `data-accent`, `data-radius`, `data-icon`                  | `accent`, `radius`, `icon`                            |
-| `data-fields`                                              | `fields` (через запятую: `data-fields="postal,city"`) |
-| `data-hint`, `data-empty-text`                             | `hint`, `emptyText`                                   |
-| `data-honest`, `data-honest-text`, `data-honest-threshold` | `honest`, `honestText`, `honestThreshold`             |
-| `data-parent`                                              | `parent` — CSS-селектор поля-родителя                 |
-| `data-fill-postal`, `data-fill-city`, …                    | `fill` — алиас поля → CSS-селектор                    |
-| `data-selected`                                            | `selected` — алиас поля для подстановки после выбора  |
+| Атрибут                                                    | Опция                                                                       |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `data-hintdata`                                            | `service`                                                                   |
+| `data-key`, `data-url`                                     | `key`, `url`                                                                |
+| `data-count`, `data-min`, `data-delay`                     | `count`, `minChars`, `delay`                                                |
+| `data-geo="false"`                                         | `geo`                                                                       |
+| `data-locations`, `data-from`, `data-to`                   | `locations`, `from`, `to`                                                   |
+| `data-placement`, `data-inline="true"`                     | `placement`, `inline`                                                       |
+| `data-accent`, `data-radius`, `data-icon`                  | `accent`, `radius`, `icon`                                                  |
+| `data-fields`                                              | `fields` (через запятую: `data-fields="postal,city"`)                       |
+| `data-hint`, `data-empty-text`                             | `hint`, `emptyText`                                                         |
+| `data-honest`, `data-honest-text`, `data-honest-threshold` | `honest`, `honestText`, `honestThreshold`                                   |
+| `data-parent`                                              | `parent` — CSS-селектор поля-родителя                                       |
+| `data-fill-postal`, `data-fill-city`, …                    | `fill` — алиас поля → CSS-селектор                                          |
+| `data-selected`                                            | `selected` — алиас поля для подстановки после выбора                        |
 | `data-label`                                               | `label` — алиас поля для главной строки пункта списка (умолч. = `selected`) |
 
 Колбэки через атрибуты не задаются — используйте событие `hintdata:select` либо ручную инициализацию:

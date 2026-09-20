@@ -71,17 +71,83 @@ export function drillStep(s: Suggestion): { field: string; fias: string; bound: 
 }
 
 /**
- * Саб-строка подсказки из набора полей. address — по карте ADDRESS_FIELD (нативные address/codes/geo);
- * прочие сервисы (fio/bank/phone/email) — по top-level полю suggestion. `value` пропускается.
+ * Саб-строка подсказки из набора полей. `value` пропускается.
+ *
+ * У адреса сперва работает КУРИРУЕМАЯ карта ADDRESS_FIELD — короткие имена (`city`, `postal`, `geo`),
+ * которые прячут вложенность нативного ответа и складывают координаты в одну строку. Если имени в
+ * карте нет, разбор идёт общим путём, как у прочих доменов: раньше неизвестный алиас у адреса молча
+ * давал пустоту, и `data-fill-region-with-type` не работал без всякого объяснения.
  */
 export function formatSub(s: Suggestion, fields: string[], isAddress: boolean): string {
   const out: string[] = [];
   for (const f of fields) {
     if (f === 'value') continue;
-    const v = isAddress ? (ADDRESS_FIELD[f]?.(s) ?? '') : scalar(s[f]);
+    const mapped = isAddress ? ADDRESS_FIELD[f]?.(s) : undefined;
+    const v = mapped ?? scalar(pick(s, f));
     if (v) out.push(v);
   }
   return out.join(' · ');
+}
+
+/**
+ * Значение подсказки по алиасу, в том числе ВЛОЖЕННОЕ: `management.name`, `state.status`,
+ * `emails.0.value`. Раньше читалось только поле верхнего уровня, поэтому привязать руководителя или
+ * статус к полю формы было нечем — объект отдавал пустоту, и это выглядело как «нет данных».
+ *
+ * Порядок разбора важен и обратно совместим:
+ *   1. ТОЧНОЕ поле верхнего уровня — выигрывает всегда (`name_short`, `opf_full`, `invalid_code`
+ *      остаются собой и не превращаются в путь);
+ *   2. алиас с точкой — путь как написан;
+ *   3. иначе подчёркивания читаются как путь. Это единственный способ выразить вложенность в
+ *      `data-fill-*`, где алиас берётся из ИМЕНИ атрибута и точку туда не записать:
+ *      `data-fill-management-name` → `management_name` → `management.name`.
+ *
+ * Любой отсутствующий или null-шаг обрывает разбор — наружу уйдёт пустая строка, а не «undefined».
+ */
+function pick(s: Suggestion, alias: string): unknown {
+  if (alias in s) return unwrap(s[alias]);
+  if (alias.includes('.')) {
+    let cur: unknown = s;
+    for (const step of alias.split('.')) {
+      if (cur === null || cur === undefined || typeof cur !== 'object') return undefined;
+      cur = (cur as Record<string, unknown>)[step];
+    }
+    return unwrap(cur);
+  }
+  return unwrap(descend(s, alias.split('_')));
+}
+
+/**
+ * Разбор подчёркиваний, когда точку написать негде (`data-fill-*`). Подчёркивание неоднозначно:
+ * `region_name` — это и возможный ключ `region_name`, и путь `address` → `region_name`. Поэтому на
+ * каждом уровне берём САМЫЙ ДЛИННЫЙ подходящий ключ и спускаемся остатком; не нашлось глубже —
+ * отступаем к более короткому. Простое `split('_')` умело только первое и ломалось на
+ * `address.region_name`, `state.actuality_date`, `okved.code`.
+ */
+function descend(obj: unknown, tokens: string[]): unknown {
+  if (obj === null || typeof obj !== 'object') return undefined;
+  const rec = obj as Record<string, unknown>;
+  for (let take = tokens.length; take >= 1; take--) {
+    const key = tokens.slice(0, take).join('_');
+    if (!(key in rec)) continue;
+    if (take === tokens.length) return rec[key];
+    const deeper = descend(rec[key], tokens.slice(take));
+    if (deeper !== undefined) return deeper;
+  }
+  return undefined;
+}
+
+/**
+ * Объект с текстовым `value` подписывается своим `value`: так устроены и наш `address`, и форма
+ * DaData `{value, unrestricted_value}`. Без этого `data-fields="address"` после перехода адреса в
+ * объект отдавал бы пустоту — то есть выглядел бы как «данных нет».
+ */
+function unwrap(raw: unknown): unknown {
+  if (raw !== null && typeof raw === 'object' && !Array.isArray(raw)) {
+    const inner = (raw as Record<string, unknown>).value;
+    if (typeof inner === 'string' || typeof inner === 'number') return inner;
+  }
+  return raw;
 }
 
 /** Только скаляр: объект или массив в подписи дал бы «[object Object]». */
