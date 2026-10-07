@@ -53,6 +53,14 @@ function esc(s: string | null | undefined): string {
 /** Счётчик виджетов на странице — из него уникальные id для aria-связок. */
 let seq = 0;
 
+const PARTY_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: 'Действует',
+  LIQUIDATING: 'В процессе ликвидации',
+  LIQUIDATED: 'Ликвидирована',
+  BANKRUPT: 'Банкротство',
+  REORGANIZING: 'В процессе реорганизации',
+};
+
 export class Widget {
   private readonly el: HTMLInputElement | HTMLTextAreaElement;
   private readonly hd: HintData;
@@ -209,7 +217,9 @@ export class Widget {
     for (const [alias, target] of Object.entries(this.o.fill)) {
       const el = this.resolve(target);
       if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) continue;
-      el.value = formatSub(s, [alias], isAddress);
+      const value = formatSub(s, [alias], isAddress);
+      const isPartyStatus = this.o.service === 'party' && (alias === 'state_status' || alias === 'state.status');
+      el.value = isPartyStatus ? (PARTY_STATUS_LABELS[value.toUpperCase()] ?? value) : value;
       el.dispatchEvent(new Event('input', { bubbles: true }));
       el.dispatchEvent(new Event('change', { bubbles: true }));
     }
