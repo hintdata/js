@@ -1,5 +1,5 @@
 /**
- * @hintdata/js — публичный пакет подсказок hint-data. Из одного пакета (как dadata):
+ * @hintdata/js — публичный пакет подсказок hintdata.ru. Из одного пакета (как у DaData):
  *  • HintData — data-клиент (свой UI);
  *  • attachHints(input, options) — готовый виджет с кастомизацией (колбэки onSelect/formatResult…).
  * Доставка: npm (`npm i @hintdata/js`) ИЛИ `<script src="https://api.hintdata.ru/widget.js">` (auto-attach

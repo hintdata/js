@@ -2,7 +2,7 @@
   "name": "@hintdata/js",
   "version": "1.2.0",
   "type": "module",
-  "description": "Подсказки и стандартизация данных hint-data: data-клиент HintData + готовый виджет attachHints с кастомизацией (zero-deps).",
+  "description": "Подсказки hintdata.ru: клиент HintData и готовый виджет attachHints с настройкой внешнего вида, без зависимостей.",
   "homepage": "https://hintdata.ru",
   "repository": {
     "type": "git",

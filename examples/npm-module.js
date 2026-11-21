@@ -13,7 +13,7 @@ const hints = attachHints(document.querySelector('#address'), {
   count: 7,
   fields: ['postal', 'city'],
   honest: true, // предупреждать, когда конкретный дом сомнителен
-  // Разложить выбранный объект по соседним полям — руками присваивать не нужно.
+  // Разложить выбранный объект по соседним полям.
   fill: { postal: '#postal', city: '#city' },
   // Без этого отозванный ключ и превышенный лимит выглядят как «ничего не нашлось».
   onError: (e) => console.warn('подсказки недоступны:', e.code, e.status),
@@ -21,10 +21,10 @@ const hints = attachHints(document.querySelector('#address'), {
   onSelectNothing: (value) => console.warn('адрес не подтверждён:', value),
 });
 
-// В SPA виджет снимают вместе с компонентом, иначе выпадашка переживёт своё поле.
+// В SPA снимайте виджет вместе с компонентом, иначе список переживёт своё поле.
 window.addEventListener('beforeunload', () => hints.destroy());
 
-// 2. Свой UI: клиент возвращает данные, отрисовка на вас.
+// 2. Свой интерфейс: клиент возвращает данные, рисуете их сами.
 const hd = new HintData(KEY);
 
 async function search(query) {

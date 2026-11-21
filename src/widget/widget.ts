@@ -11,10 +11,10 @@ import type { LocationConstraint, Service, Suggestion, SuggestOptions } from '..
 import { resolveOptions, type ResolvedOptions, type WidgetOptions } from './options';
 import { ICON, ICONS, injectStyles } from './styles';
 
-// Все pk-доступные suggest-домены шлюза (RouteCatalog.SuggestDomains + отдельный роут cadastre).
-// Виджет generic — рисует value+саб; drill-down/гео живут только под address (гейты по domain() ниже).
-// Права решает шлюз: если ключ не проходит, клиент увидит ошибку API, а не чужую выдачу — поэтому
-// подменять сервис адресными подсказками здесь нельзя.
+// Сервисы подсказок, доступные с публичным ключом pk_. Виджет общий: рисует value и строку под ним;
+// уточнение адреса по шагам есть только у address, гео-приоритет — у GEO_SERVICES (проверки по domain() ниже).
+// Доступ проверяет API: если ключ не подходит, клиент получит ошибку, а не подсказки другого сервиса,
+// поэтому подменять сервис адресными подсказками нельзя.
 const SUPPORTED: Service[] = [
   'address',
   'cadastre',

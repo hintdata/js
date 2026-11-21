@@ -69,7 +69,7 @@ describe('formatSub — подпись под значением', () => {
   } as unknown as Suggestion;
 
   it('собирает адресные поля через разделитель', () => {
-    expect(formatSub(addr, ['postal', 'city'], true)).toBe('101000 · Москва');
+    expect(formatSub(addr, ['postal', 'city'], true)).toBe('101000, Москва');
   });
 
   it('пропускает value и пустые поля', () => {
@@ -212,7 +212,7 @@ describe('formatSub — структурный нативный формат о�
 
   it('читает вложенное через точку', () => {
     expect(formatSub(party, ['management.name', 'opf.full'], false)).toBe(
-      'ГРЕФ ГЕРМАН ОСКАРОВИЧ · Публичное акционерное общество',
+      'ГРЕФ ГЕРМАН ОСКАРОВИЧ, Публичное акционерное общество',
     );
   });
 
