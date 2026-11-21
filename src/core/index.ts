@@ -1,6 +1,6 @@
 /** Публичная поверхность ядра (его же реэкспортит SDK-точка sdk.ts). */
-export { HintData, GEO_SERVICES } from './client';
-export { ADDRESS_FIELD, nextBound, formatSub, boostFromLocation } from './address';
+export { HintData, GEO_SERVICES } from './client.js';
+export { ADDRESS_FIELD, nextBound, formatSub, boostFromLocation } from './address.js';
 export type {
   Service,
   Suggestion,
@@ -8,4 +8,4 @@ export type {
   LocationConstraint,
   AddressBound,
   HintDataConfig,
-} from './types';
+} from './types.js';

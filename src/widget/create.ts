@@ -4,9 +4,9 @@
  *   const h = attachHints(input, { service: 'address', key: 'pk_…', onSelect: (x) => … });
  *   h.destroy();   // снять
  */
-import { HintData } from '../core/client';
-import { Widget } from './widget';
-import type { WidgetOptions } from './options';
+import { HintData } from '../core/client.js';
+import { Widget } from './widget.js';
+import type { WidgetOptions } from './options.js';
 
 /** Управление живым виджетом. */
 export interface HintsInstance {

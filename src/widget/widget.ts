@@ -4,12 +4,12 @@
  * через attachHints либо из data-* через parseDataAttrs); хранится сырым, чтобы setOptions мог
  * накладывать патч. Сеть/кэш/гео — в HintData.
  */
-import { HintData, HintDataError } from '../core/client';
-import { drillStep, formatSub } from '../core/address';
-import { GEO_SERVICES } from '../core/client';
-import type { LocationConstraint, Service, Suggestion, SuggestOptions } from '../core/types';
-import { resolveOptions, type ResolvedOptions, type WidgetOptions } from './options';
-import { ICON, ICONS, injectStyles } from './styles';
+import { HintData, HintDataError } from '../core/client.js';
+import { drillStep, formatSub } from '../core/address.js';
+import { GEO_SERVICES } from '../core/client.js';
+import type { LocationConstraint, Service, Suggestion, SuggestOptions } from '../core/types.js';
+import { resolveOptions, type ResolvedOptions, type WidgetOptions } from './options.js';
+import { ICON, ICONS, injectStyles } from './styles.js';
 
 // Сервисы подсказок, доступные с публичным ключом pk_. Виджет общий: рисует value и строку под ним;
 // уточнение адреса по шагам есть только у address, гео-приоритет — у GEO_SERVICES (проверки по domain() ниже).
@@ -56,7 +56,7 @@ let seq = 0;
 const PARTY_STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Действует',
   LIQUIDATING: 'В процессе ликвидации',
-  LIQUIDATED: 'Ликвидирована',
+  LIQUIDATED: 'Деятельность прекращена', // нейтрально по роду: подходит и юрлицу, и ИП
   BANKRUPT: 'Банкротство',
   REORGANIZING: 'В процессе реорганизации',
 };

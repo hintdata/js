@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { formatSub } from '../src/core/address';
+import type { Suggestion } from '../src/core/types';
 import { parseDataAttrs, resolveOptions } from '../src/widget/options';
 
 describe('resolveOptions — дефолты и клампы', () => {
@@ -105,5 +107,36 @@ describe('parseDataAttrs — атрибуты поля', () => {
 
   it('незаданные атрибуты не подменяют дефолты resolveOptions', () => {
     expect(resolveOptions(parseDataAttrs(el({}))).count).toBe(7);
+  });
+});
+
+describe('locations — формат зависит от сервиса', () => {
+  it('address: строка — название региона', () => {
+    expect(resolveOptions({ locations: 'Москва' }).locations).toEqual([{ region: 'Москва' }]);
+  });
+
+  it('party: двузначный код региона', () => {
+    expect(resolveOptions({ service: 'party', locations: '77' }).locations).toEqual([{ region: '77' }]);
+  });
+
+  it('party: строка не из двух цифр игнорируется — API отфильтровал бы по несуществующему коду', () => {
+    expect(resolveOptions({ service: 'party', locations: 'Москва' }).locations).toBeNull();
+  });
+
+  it('party: объект проходит как есть', () => {
+    expect(resolveOptions({ service: 'party', locations: { kladr_id: '7700000000000' } }).locations).toEqual([
+      { kladr_id: '7700000000000' },
+    ]);
+  });
+});
+
+describe('data-fill-* — индекс массива через подчёркивания', () => {
+  it('data-fill-emails_0_value читается как emails.0.value', () => {
+    const el = document.createElement('input');
+    el.setAttribute('data-fill-emails_0_value', '#mail');
+    const fill = parseDataAttrs(el).fill ?? {};
+    expect(Object.keys(fill)).toEqual(['emails_0_value']);
+    const s = { value: 'x', emails: [{ value: 'a@b.ru' }] } as unknown as Suggestion;
+    expect(formatSub(s, Object.keys(fill), false)).toBe('a@b.ru');
   });
 });

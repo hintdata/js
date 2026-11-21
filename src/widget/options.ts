@@ -2,8 +2,8 @@
  * Опции виджета: программные (attachHints(input, options)) и из data-* (standalone /widget.js).
  * resolveOptions применяет дефолты/клампы → ResolvedOptions (с ними работает Widget).
  */
-import type { HintData, HintDataError } from '../core/client';
-import type { FioPart, LocationConstraint, Service, Suggestion } from '../core/types';
+import type { HintData, HintDataError } from '../core/client.js';
+import type { FioPart, LocationConstraint, Service, Suggestion } from '../core/types.js';
 
 /** Колбэки кастомизации (как у DaData). */
 export interface WidgetCallbacks {
@@ -91,9 +91,11 @@ export interface WidgetOptions extends WidgetCallbacks {
   /** Гео-приоритет по IP (address и party, по умолчанию true). */
   geo?: boolean;
   /**
-   * Ограничить территорией (address и party). Строка — сокращение для региона; объект или массив —
-   * любое ограничение API: `{ city: 'Тверь' }`, `{ city_fias_id: '…' }`. Для связанных полей точнее
-   * ограничивать по `*_fias_id` выбранного объекта, а не по имени.
+   * Ограничить территорией (address и party). Строка — сокращение для региона: у address название
+   * («Москва»), у party двузначный код региона («77»; иная строка игнорируется). Объект или массив —
+   * ограничение API. У address любое: `{ city: 'Тверь' }`, `{ city_fias_id: '…' }`; точнее ограничивать
+   * по `*_fias_id` выбранного объекта, а не по имени. У party только `{ region: '77' }` или
+   * `{ kladr_id: '…' }` (учитываются первые две цифры).
    */
   locations?: string | LocationConstraint | LocationConstraint[];
   /** Верхний уровень среза: region, area, city, settlement, street, house или flat (только address). */
@@ -170,10 +172,17 @@ function toParts(v: WidgetOptions['parts']): FioPart[] | null {
   return parts.length ? parts : null;
 }
 
-/** Строка — сокращение для региона (в т.ч. из data-locations); объект/массив идут в API как есть. */
-function toLocations(v: WidgetOptions['locations']): LocationConstraint[] | null {
+/**
+ * Строка — сокращение для региона (в т.ч. из data-locations); объект/массив идут в API как есть.
+ * У address `region` — название. У party API принимает только двузначный код региона, поэтому строка
+ * вида «Москва» дала бы фильтр по несуществующему коду и пустую выдачу: такое сокращение игнорируется.
+ */
+function toLocations(v: WidgetOptions['locations'], service: string): LocationConstraint[] | null {
   if (!v) return null;
-  if ('string' === typeof v) return [{ region: v }];
+  if ('string' === typeof v) {
+    if ('party' === service && !/^\d{2}$/.test(v)) return null;
+    return [{ region: v }];
+  }
   const list = Array.isArray(v) ? v : [v];
   return list.length ? list : null;
 }
@@ -203,7 +212,7 @@ export function resolveOptions(o: WidgetOptions): ResolvedOptions {
     minChars: clampInt(o.minChars, 1, 10, 1),
     delay: clampInt(o.delay, 0, 2000, 100),
     geo: o.geo ?? true,
-    locations: toLocations(o.locations),
+    locations: toLocations(o.locations, service),
     from: o.from || null,
     to: o.to || null,
     parts: toParts(o.parts),

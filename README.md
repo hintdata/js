@@ -90,7 +90,7 @@ hints.destroy(); // снять виджет
 
 Неизвестный код виджет заменяет на `address` и один раз пишет предупреждение в консоль.
 
-Углубление по уровням и опции `from`/`to` работают только для `address`, гео-приоритет и `locations` — для `address` и `party`.
+Углубление по уровням и опции `from`/`to` работают только для `address`, гео-приоритет и `locations` — для `address` и `party` (формат `locations` у `party` другой, см. таблицу опций).
 Остальные сервисы рисуются как плоский список «значение + подпись».
 
 ---
@@ -117,8 +117,8 @@ hints.destroy(); // снять виджет
 | `count`       | `number`                       | `7`    | 1–20   | сколько подсказок показывать                                                                 |
 | `minChars`    | `number`                       | `1`    | 1–10   | с какого символа запрашивать                                                                 |
 | `delay`       | `number`                       | `100`  | 0–2000 | пауза после набора, мс                                                                       |
-| `geo`         | `boolean`                      | `true` | —      | поднимать выше результаты из региона по IP (`address` и `party`)                             |
-| `locations`   | `string \| object \| object[]` | —      | —      | ограничить территорией (`address`, `party`): `'Москва'` (регион) или `{ city_fias_id: '…' }` |
+| `geo`         | `boolean`                      | `true` | —      | поднимать выше результаты из региона по IP (`address` и `party`); при подключении виджета на страницу уходит один запрос `iplocate` (общий для всех полей `address`/`party`), он идёт в суточный лимит ключа; `geo: false` / `data-geo="false"` выключает |
+| `locations`   | `string \| object \| object[]` | —      | —      | ограничить территорией (`address`, `party`). `address`: `'Москва'` (название региона) или `{ city_fias_id: '…' }`. `party`: только `'77'` (двузначный код региона), `{ region: '77' }` или `{ kladr_id: '…' }` (значимы первые две цифры); строка не из двух цифр, например `'Москва'`, игнорируется |
 | `from` / `to` | `string`                       | —      | —      | срез по уровню: `region`, `area`, `city`, `settlement`, `street`, `house`, `flat`            |
 | `parts`       | `string \| string[]`           | —      | —      | только части ФИО (`fio`): `'SURNAME'`, `'NAME'`, `'PATRONYMIC'` — для отдельных полей формы  |
 
@@ -160,8 +160,8 @@ fields: ['emails.0.value']; // сквозь массив по индексу
 
 Разбор идёт по порядку, и первое совпадение выигрывает:
 
-1. **точное поле верхнего уровня** — `name_short` остаётся собой и не читается как `name.short`;
-2. у адреса — **короткое имя из списка выше**;
+1. у адреса — **короткое имя из списка выше** (`city`, `postal`, `geo`…): оно сильнее всего остального;
+2. **точное поле верхнего уровня** — `name_short` остаётся собой и не читается как `name.short`;
 3. **путь через точку**;
 4. **подчёркивания как путь**, если прямого совпадения не нашлось.
 
@@ -171,8 +171,9 @@ fields: ['emails.0.value']; // сквозь массив по индексу
 Любой отсутствующий или `null` шаг даёт пустую строку. Объект или массив целиком — тоже пустую: в
 поле формы он превратился бы в «[object Object]», поэтому указывать нужно лист.
 
-⚠️ Номер элемента массива в имени атрибута не выразить: HTML превращает имя в ключ `dataset`, и
-цифра ломает разбор. `emails.0.value` доступен в `fields`/`label`/`selected`, но не в `data-fill-*`.
+Номер элемента массива в `data-fill-*` пишется через подчёркивания: `data-fill-emails_0_value` →
+алиас `emails_0_value` → путь `emails.0.value`. Дефисная форма `data-fill-emails-0-value` не работает:
+HTML превращает имя в ключ `dataset`, и цифра после дефиса ломает разбор.
 
 `selected` берёт те же алиасы: без него в поле после выбора попадает `suggestion.value` целиком, а
 `selected: 'street'` оставит только улицу — актуально для связанных полей, куда иначе ляжет полный адрес.
@@ -251,7 +252,7 @@ const house = attachHints(houseInput, { client, parent: streetInput, to: 'house'
 
 ```html
 <input data-hintdata="address" id="city" data-from="city" data-to="city" data-selected="city" />
-<input data-hintdata="address" data-parent="#city" data-to="street" data-selected="street" />
+<input data-hintdata="address" id="street" data-parent="#city" data-to="street" data-selected="street" />
 <input data-hintdata="address" data-parent="#street" data-to="house" data-selected="house" />
 ```
 
@@ -283,6 +284,11 @@ attachHints(input, { key: 'pk_xxx', fill: { postal: '#zip', city: '#city' } });
 
 Значение атрибута — CSS-селектор целевого поля (`#inn`, `.director`, `[name=boss]`): куда положить.
 Имя атрибута — что взять. Поле, которого нет на странице, молча пропускается.
+
+Исключение — статус организации у `party`: в `fill` (`state_status`, `state.status`) пишется русская
+подпись — «Действует», «В процессе ликвидации», «Деятельность прекращена», «Банкротство», «В процессе
+реорганизации». Во всех остальных местах (`fields`, `selected`, `onSelect`, события) это код API
+(`ACTIVE`, `LIQUIDATING`, `LIQUIDATED`, `BANKRUPT`, `REORGANIZING`).
 
 В заполненные поля отправляются `input` и `change`, поэтому биндинги фреймворков их подхватывают.
 

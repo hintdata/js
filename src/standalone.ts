@@ -3,9 +3,9 @@
  * вешает виджет на поля с [data-hintdata] (data-* → options), подхватывает динамически добавленные (SPA).
  * Для тех, кто без сборки: <script src="…/widget.js" data-key="pk_…"></script> + <input data-hintdata="address">.
  */
-import { HintData } from './core/client';
-import { attachHints as rawAttachHints, type HintsInstance } from './widget/create';
-import { parseDataAttrs, type WidgetOptions } from './widget/options';
+import { HintData } from './core/client.js';
+import { attachHints as rawAttachHints, type HintsInstance } from './widget/create.js';
+import { parseDataAttrs, type WidgetOptions } from './widget/options.js';
 
 type Field = HTMLInputElement | HTMLTextAreaElement;
 const SELECTOR = '[data-hintdata]';

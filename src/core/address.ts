@@ -1,7 +1,7 @@
 /**
  * Чистые хелперы по адресу (без DOM/сети) — для НАТИВНОГО формата ответа (address/components/codes/geo).
  */
-import type { AddressBound, LocationConstraint, Suggestion } from './types';
+import type { AddressBound, LocationConstraint, Suggestion } from './types.js';
 
 /**
  * alias поля подсказки → извлечение значения из нативного suggestion.
@@ -75,7 +75,7 @@ export function drillStep(s: Suggestion): { field: string; fias: string; bound: 
  *
  * У адреса сперва работает карта ADDRESS_FIELD: короткие имена (`city`, `postal`, `geo`) прячут
  * вложенность нативного ответа и складывают координаты в одну строку. Имя, которого в карте нет,
- * разбирается общим путём, как у других сервисов: так работает, например, `data-fill-region-with-type`.
+ * разбирается общим путём, как у других сервисов: так работает, например, `data-fill-codes-oktmo` (`codes.oktmo`).
  */
 export function formatSub(s: Suggestion, fields: string[], isAddress: boolean): string {
   const out: string[] = [];
@@ -92,7 +92,7 @@ export function formatSub(s: Suggestion, fields: string[], isAddress: boolean): 
  * Значение подсказки по алиасу, в том числе ВЛОЖЕННОЕ: `management.name`, `state.status`,
  * `emails.0.value`: так к полю формы привязываются руководитель, статус и другие вложенные данные.
  *
- * Порядок разбора:
+ * Порядок разбора (у адреса короткие имена из ADDRESS_FIELD formatSub берёт ДО pick и они сильнее всего ниже):
  *   1. ТОЧНОЕ поле верхнего уровня — выигрывает всегда (`name_short`, `opf_full`, `invalid_code`
  *      остаются собой и не превращаются в путь);
  *   2. алиас с точкой — путь как написан;

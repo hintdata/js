@@ -5,8 +5,8 @@
  * Доставка: npm (`npm i @hintdata/js`) ИЛИ `<script src="https://api.hintdata.ru/widget.js">` (auto-attach
  * по data-*, та же сборка). Подробнее — README.
  */
-export { HintData, HintDataError } from './core/client';
-export { ADDRESS_FIELD, nextBound, formatSub, boostFromLocation } from './core/address';
+export { HintData, HintDataError } from './core/client.js';
+export { ADDRESS_FIELD, nextBound, formatSub, boostFromLocation } from './core/address.js';
 export type {
   Service,
   Suggestion,
@@ -15,7 +15,7 @@ export type {
   AddressBound,
   FioPart,
   HintDataConfig,
-} from './core/types';
+} from './core/types.js';
 
-export { attachHints, type HintsInstance } from './widget/create';
-export type { WidgetOptions, WidgetCallbacks } from './widget/options';
+export { attachHints, type HintsInstance } from './widget/create.js';
+export type { WidgetOptions, WidgetCallbacks } from './widget/options.js';

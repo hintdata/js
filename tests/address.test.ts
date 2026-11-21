@@ -86,6 +86,13 @@ describe('formatSub — подпись под значением', () => {
   });
 });
 
+describe('formatSub — поле нативного адреса вне ADDRESS_FIELD', () => {
+  it('codes_oktmo (data-fill-codes-oktmo) читается как codes.oktmo', () => {
+    const sg = { value: 'x', address: {}, codes: { oktmo: '45382000' } } as unknown as Suggestion;
+    expect(formatSub(sg, ['codes_oktmo'], true)).toBe('45382000');
+  });
+});
+
 describe('ADDRESS_FIELD', () => {
   it('кадастровый номер читается из верхнего уровня', () => {
     expect(ADDRESS_FIELD.cadastral({ value: 'x', cadastral_num: '50:21:1' } as Suggestion)).toBe('50:21:1');

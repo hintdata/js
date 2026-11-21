@@ -70,7 +70,12 @@ export interface Suggestion {
   [key: string]: unknown;
 }
 
-/** Ограничение или предпочтение по территории: названия (`city`, `region`) или коды (`city_fias_id`, `region_kladr_id`). */
+/**
+ * Ограничение или предпочтение по территории.
+ * У address: названия (`city`, `region`) или коды (`city_fias_id`, `region_kladr_id`).
+ * У party API принимает только `{ region: '77' }` (двузначный код региона) или `{ kladr_id: '…' }`
+ * (значим только код региона, первые две цифры); любые другие ключи отвергаются.
+ */
 export type LocationConstraint = Record<string, string>;
 
 /** Уровень детализации адреса для срезов from_bound/to_bound. */
@@ -83,9 +88,9 @@ export type FioPart = 'SURNAME' | 'NAME' | 'PATRONYMIC';
 export interface SuggestOptions {
   /** Сколько подсказок вернуть (1–20). */
   count?: number;
-  /** Жёсткий фильтр по территории (address и party). */
+  /** Жёсткий фильтр по территории (address и party; формат ограничения у party — см. LocationConstraint). */
   locations?: LocationConstraint[];
-  /** Мягкое предпочтение территории: поднимает выше, не отсекает (address и party). */
+  /** Мягкое предпочтение территории: поднимает выше, не отсекает (address и party; формат у party — см. LocationConstraint). */
   locationsBoost?: LocationConstraint[];
   /** Нижняя граница среза по уровню (только address). */
   fromBound?: AddressBound;
