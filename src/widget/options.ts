@@ -3,7 +3,7 @@
  * resolveOptions применяет дефолты/клампы → ResolvedOptions (с ними работает Widget).
  */
 import type { HintData, HintDataError } from '../core/client';
-import type { LocationConstraint, Service, Suggestion } from '../core/types';
+import type { FioPart, LocationConstraint, Service, Suggestion } from '../core/types';
 
 /** Колбэки кастомизации (как у dadata). */
 export interface WidgetCallbacks {
@@ -93,6 +93,11 @@ export interface WidgetOptions extends WidgetCallbacks {
   /** Срез по уровню from_bound/to_bound (только address). */
   from?: string;
   to?: string;
+  /**
+   * Только эти части ФИО (только fio): массив или строка через запятую — `'NAME'`, `'SURNAME,PATRONYMIC'`.
+   * Для отдельных полей формы: поле «Имя» подсказывает имена, а не полные ФИО.
+   */
+  parts?: FioPart[] | string;
   /** Выпадашка в контейнере поля (а не плавающая на body) — для встраивания в свой блок. */
   inline?: boolean;
   /**
@@ -130,6 +135,7 @@ export interface ResolvedOptions extends WidgetCallbacks {
   locations: LocationConstraint[] | null;
   from: string | null;
   to: string | null;
+  parts: FioPart[] | null;
   inline: boolean;
   placement: 'auto' | 'bottom' | 'top' | 'flow';
   demo: boolean;
@@ -147,6 +153,16 @@ const clampInt = (v: unknown, min: number, max: number, def: number): number => 
   if (Number.isNaN(n)) return def;
   return Math.min(max, Math.max(min, n));
 };
+
+const FIO_PARTS: readonly FioPart[] = ['SURNAME', 'NAME', 'PATRONYMIC'];
+
+/** Части ФИО из массива или строки через запятую; неизвестные отбрасываются, пусто — null. */
+function toParts(v: WidgetOptions['parts']): FioPart[] | null {
+  if (!v) return null;
+  const list = ('string' === typeof v ? v.split(',') : v).map((p) => p.trim().toUpperCase());
+  const parts = FIO_PARTS.filter((p) => list.includes(p));
+  return parts.length ? parts : null;
+}
 
 /** Строка — сокращение для региона (в т.ч. из data-locations); объект/массив идут в API как есть. */
 function toLocations(v: WidgetOptions['locations']): LocationConstraint[] | null {
@@ -184,6 +200,7 @@ export function resolveOptions(o: WidgetOptions): ResolvedOptions {
     locations: toLocations(o.locations),
     from: o.from || null,
     to: o.to || null,
+    parts: toParts(o.parts),
     inline: o.inline ?? false,
     // demo — постоянно открытая витрина: ей по умолчанию место в потоке, а не оверлей
     placement: PLACEMENTS.find((p) => p === o.placement) ?? (o.demo ? 'flow' : 'auto'),
@@ -228,6 +245,7 @@ export function parseDataAttrs(el: HTMLElement): WidgetOptions {
     locations: d.locations,
     from: d.from,
     to: d.to,
+    parts: d.parts,
     inline: d.inline === 'true' ? true : undefined,
     placement: d.placement as WidgetOptions['placement'], // валидация — в resolveOptions
     demo: d.demo === 'true' ? true : undefined,

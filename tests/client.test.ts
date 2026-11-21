@@ -58,6 +58,16 @@ describe('запрос', () => {
     expect(lastCall().body).toEqual({ query: 'сбер', count: 3 });
   });
 
+  it('части ФИО уходят только для fio', async () => {
+    fetchMock.mockResolvedValue(ok({ suggestions: [] }));
+    const hd = new HintData('k');
+    await hd.suggest('fio', 'але', { parts: ['NAME'] });
+    expect(lastCall().body).toEqual({ query: 'але', parts: ['NAME'] });
+
+    await hd.suggest('address', 'але', { parts: ['NAME'] });
+    expect(lastCall().body).toEqual({ query: 'але' });
+  });
+
   it('пустой запрос не ходит в сеть', async () => {
     expect(await new HintData('k').suggest('address', '   ')).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();

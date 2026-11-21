@@ -317,6 +317,7 @@ export class Widget {
       if (this.o.locations) o.locations = this.o.locations;
       if (this.boost && !noBoost) o.locationsBoost = [this.boost];
     }
+    if (this.domain() === 'fio' && this.o.parts) o.parts = this.o.parts;
     return { ...o, ...extra };
   }
 

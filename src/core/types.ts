@@ -77,6 +77,9 @@ export type LocationConstraint = Record<string, string>;
 export type AddressBound = 'region' | 'area' | 'city' | 'settlement' | 'street' | 'house' | 'flat';
 
 /** Опции запроса подсказок. */
+/** Часть ФИО: подсказки для отдельного поля «Фамилия», «Имя» или «Отчество». */
+export type FioPart = 'SURNAME' | 'NAME' | 'PATRONYMIC';
+
 export interface SuggestOptions {
   /** Сколько подсказок вернуть (1–20). */
   count?: number;
@@ -88,6 +91,8 @@ export interface SuggestOptions {
   fromBound?: AddressBound;
   /** Верхняя граница среза по уровню (только address). */
   toBound?: AddressBound;
+  /** Только эти части ФИО (только fio): поле «Имя» подсказывает имена, а не полные ФИО. */
+  parts?: FioPart[];
   /** Отмена запроса (для гонок ввода). */
   signal?: AbortSignal;
 }

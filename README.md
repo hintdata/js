@@ -112,14 +112,15 @@ Drill-down, гео-приоритет и опции `from`/`to`/`locations` ра
 
 ### Поведение ввода
 
-| Опция         | Тип                            | Дефолт | Лимит  | Описание                                                                          |
-| ------------- | ------------------------------ | ------ | ------ | --------------------------------------------------------------------------------- |
-| `count`       | `number`                       | `7`    | 1–20   | сколько подсказок показывать                                                      |
-| `minChars`    | `number`                       | `1`    | 1–10   | с какого символа запрашивать                                                      |
-| `delay`       | `number`                       | `100`  | 0–2000 | пауза после набора, мс                                                            |
-| `geo`         | `boolean`                      | `true` | —      | поднимать выше адреса из региона по IP (только `address`)                         |
-| `locations`   | `string \| object \| object[]` | —      | —      | ограничить территорией: `'Москва'` (регион) или `{ city_fias_id: '…' }`           |
-| `from` / `to` | `string`                       | —      | —      | срез по уровню: `region`, `area`, `city`, `settlement`, `street`, `house`, `flat` |
+| Опция         | Тип                            | Дефолт | Лимит  | Описание                                                                                    |
+| ------------- | ------------------------------ | ------ | ------ | ------------------------------------------------------------------------------------------- |
+| `count`       | `number`                       | `7`    | 1–20   | сколько подсказок показывать                                                                |
+| `minChars`    | `number`                       | `1`    | 1–10   | с какого символа запрашивать                                                                |
+| `delay`       | `number`                       | `100`  | 0–2000 | пауза после набора, мс                                                                      |
+| `geo`         | `boolean`                      | `true` | —      | поднимать выше адреса из региона по IP (только `address`)                                   |
+| `locations`   | `string \| object \| object[]` | —      | —      | ограничить территорией: `'Москва'` (регион) или `{ city_fias_id: '…' }`                     |
+| `from` / `to` | `string`                       | —      | —      | срез по уровню: `region`, `area`, `city`, `settlement`, `street`, `house`, `flat`           |
+| `parts`       | `string \| string[]`           | —      | —      | только части ФИО (`fio`): `'SURNAME'`, `'NAME'`, `'PATRONYMIC'` — для отдельных полей формы |
 
 `to` фиксирует нижний уровень и одновременно выключает углубление: `to: 'city'` даёт выбор только городов.
 
@@ -351,6 +352,7 @@ widget.js, до первого использования поля. Его же 
 | `data-count`, `data-min`, `data-delay`                     | `count`, `minChars`, `delay`                                                |
 | `data-geo="false"`                                         | `geo`                                                                       |
 | `data-locations`, `data-from`, `data-to`                   | `locations`, `from`, `to`                                                   |
+| `data-parts`                                               | `parts` (через запятую: `data-parts="NAME"`)                                |
 | `data-placement`, `data-inline="true"`                     | `placement`, `inline`                                                       |
 | `data-accent`, `data-radius`, `data-icon`                  | `accent`, `radius`, `icon`                                                  |
 | `data-fields`                                              | `fields` (через запятую: `data-fields="postal,city"`)                       |
@@ -397,6 +399,8 @@ await hd.suggest('address', 'мясницкая 13', {
   toBound: 'house',
   signal: controller.signal,
 });
+
+await hd.suggest('fio', 'але', { parts: ['NAME'] }); // только имена — для поля «Имя»
 
 await hd.suggest('car_model', 'camry');
 await hd.suggest('cadastre', '50:21:0010101', { count: 50 });

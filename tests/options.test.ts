@@ -25,6 +25,15 @@ describe('resolveOptions — дефолты и клампы', () => {
     expect(resolveOptions({ [key]: given })).toMatchObject({ [key]: expected });
   });
 
+  it.each([
+    ['NAME', ['NAME']],
+    [' patronymic , surname ', ['SURNAME', 'PATRONYMIC']],
+    [['NAME', 'ИМЯ'], ['NAME']],
+    ['ИМЯ', null],
+  ])('parts %j → %j', (given, expected) => {
+    expect(resolveOptions({ parts: given as string }).parts).toEqual(expected);
+  });
+
   it('нечисловое значение откатывается к дефолту', () => {
     expect(resolveOptions({ count: 'много' as unknown as number }).count).toBe(7);
   });

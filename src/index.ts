@@ -13,6 +13,7 @@ export type {
   SuggestOptions,
   LocationConstraint,
   AddressBound,
+  FioPart,
   HintDataConfig,
 } from './core/types';
 
