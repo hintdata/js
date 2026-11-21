@@ -1,4 +1,4 @@
-# Публикация в npm по тегу версии (v1.2.0). Проверки и сборку запускает prepublishOnly из package.json.
+# Публикация в npm по тегу версии (1.2.0, без «v»). Проверки и сборку запускает prepublishOnly из package.json.
 # Вход в npm — Trusted Publishing (OIDC): токена в репозитории нет, provenance npm добавляет сам.
 # Разовая настройка на npmjs.com: @hintdata/js → Settings → Trusted Publisher → GitHub Actions,
 # репозиторий hintdata/js, workflow release.yml.
@@ -6,7 +6,7 @@ name: Release
 
 on:
   push:
-    tags: ['v*.*.*']
+    tags: ['*.*.*']
 
 jobs:
   publish:
@@ -25,7 +25,7 @@ jobs:
       - name: Тег совпадает с версией пакета
         run: |
           version=$(node -p "require('./package.json').version")
-          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "тег $GITHUB_REF_NAME, а в package.json $version"; exit 1; }
+          [ "$version" = "$GITHUB_REF_NAME" ] || { echo "тег $GITHUB_REF_NAME, а в package.json $version"; exit 1; }
       - name: npm умеет Trusted Publishing (11.5.1 и новее)
         run: |
           node -e '
